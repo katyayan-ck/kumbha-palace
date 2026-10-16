@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-17 — Plot
+
+- Gates, stables, the Shiva shrine, and the Vijay Stambh moved to the places on the plot. Suraj Pol is the south door of the palace. The Tripolia, with two round bastions, is the outer south gate. The stables sit south-west. The tower stands south-east, still at 37.19 m.
+- Added, as masses only: the open courts between the two gates, the royal garden, the east road, Fateh Prakash, Nau Lakha Bandar, Jauhar Kund, the Meerabai and Kumbha Shyam temple, and the west fort wall.
+- The photographed rooms were not moved. The dome on its colonnade, the sunken zanana court, and the cliff curtains stay as the pictures show them.
+- The download link is gone. Wire toggles a wireframe of the model.
+- Rooms named twice on the plot, and the offices with no standing walls, were not invented as extra buildings.
+
 ## 2026-10-17 — Vijay Stambh to the measured tower
 
 - The victory tower is no longer a stack of equal boxes. It follows the surveyed column: 37.19 m to the cupola, faces 10.67 m at the base and 5.33 m under the dome, on a terrace 12.8 m square.

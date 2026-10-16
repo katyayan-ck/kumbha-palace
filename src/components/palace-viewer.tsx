@@ -6,7 +6,7 @@ const VIEWS: { id: string; label: string; caption: string }[] = [
   {
     id: "approach",
     label: "Approach",
-    caption: "East approach: Suraj Pol, then Tripolia, into the restored court.",
+    caption: "From the south: Tripolia, the open courts, then Suraj Pol.",
   },
   {
     id: "gallery",
@@ -78,6 +78,7 @@ export function PalaceViewer() {
   const [failed, setFailed] = useState<string | null>(null);
   const [view, setView] = useState<string | null>(null);
   const [time, setTime] = useState("morning");
+  const [wire, setWire] = useState(false);
   const [caption, setCaption] = useState(
     "Drag to look. Hover a building, then click it for its history.",
   );
@@ -130,6 +131,12 @@ export function PalaceViewer() {
     handleRef.current?.setTime(id);
   }
 
+  function toggleWire() {
+    const next = !wire;
+    setWire(next);
+    handleRef.current?.setWire(next);
+  }
+
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-ink text-plaster">
       <canvas ref={canvasRef} className="h-full w-full touch-none" />
@@ -149,13 +156,17 @@ export function PalaceViewer() {
             <p className="font-sans text-xs tracking-wide text-muted">Chittorgarh · Mewar</p>
           </div>
           <div className="pointer-events-auto ml-auto flex flex-wrap gap-2">
-            <a
-              href="/kumbha-palace-src.zip"
-              download="kumbha-palace-src.zip"
-              className="inline-flex min-h-11 items-center border border-sand bg-sand px-3 font-sans text-sm text-ink"
+            <button
+              type="button"
+              disabled={!ready}
+              onClick={toggleWire}
+              className={
+                "min-h-11 border border-sand px-3 font-sans text-sm " +
+                (wire ? "bg-sand text-ink" : "bg-ink text-plaster")
+              }
             >
-              Download source
-            </a>
+              Wire
+            </button>
             {TIMES.map((item) => (
               <button
                 key={item.id}

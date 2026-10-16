@@ -5,6 +5,7 @@ import { PARTS, type PartInfo } from "@/lib/palace/parts";
 export type PalaceHandle = {
   setView: (id: string) => void;
   setTime: (id: "morning" | "noon" | "evening" | string) => void;
+  setWire: (on: boolean) => void;
   dispose: () => void;
 };
 
@@ -16,18 +17,18 @@ export type PalaceHooks = {
 type V3 = [number, number, number];
 
 const PRESETS: Record<string, { pos: V3; target: V3 }> = {
-  approach: { pos: [46, 22, 44], target: [8, 14, 5] },
+  approach: { pos: [2, 14, 58], target: [2, 6, 18] },
   gallery: { pos: [2, 15.2, 27], target: [8, 17.2, 6] },
   rani: { pos: [-9.7, 8.55, -3.35], target: [-1.7, 3.05, -0.15] },
   dome: { pos: [-7.55, 4.35, -8.95], target: [-7.6, 9.2, -9.55] },
   cliff: { pos: [-58, 32, -6], target: [10, 6, 78] },
   court: { pos: [2, 7.5, 16], target: [0, 3, -8] },
   diwan: { pos: [1, 3.4, -8], target: [0, 2.6, -16] },
-  aerial: { pos: [28, 78, 62], target: [6, 8, -18] },
+  aerial: { pos: [8, 110, 78], target: [6, 4, 8] },
   sunrise: { pos: [28, 16, 48], target: [8, 12, 4] },
   zenana: { pos: [-2, 8, -24], target: [-4, 3, -34] },
   bastion: { pos: [42, 10, 40], target: [20, 8, 18] },
-  stambh: { pos: [88, 18, -20], target: [53, 18, -48] },
+  stambh: { pos: [98, 16, 28], target: [72, 18, 56] },
 };
 
 const COURT = 1.55;
@@ -931,19 +932,18 @@ export function mountPalace(
   addFigure(3.6, COURT + 0.06, 2.1, -0.8, "stand", 0xd7c4a2);
   addFigure(6.8, COURT + 0.06, -3.8, 1.4, "stand", 0x243e32);
 
-  addBox(24.5, COURT + 2.3, 6, 7.4, 4.6, 15, matMasonry);
-  addBox(24.5, COURT + 2.4, 6, 7.7, 0.4, 15.3, matRubble);
+  addBox(-20, COURT + 2.3, 36, 18, 4.6, 8, matMasonry);
+  addBox(-20, COURT + 2.4, 36, 18.4, 0.4, 8.3, matRubble);
   const stables = new THREE.Group();
-  stables.position.set(20.65, COURT, 6);
-  stables.rotation.y = -Math.PI / 2;
-  addArch(stables, -4.2, 1.35, 2.15);
+  stables.position.set(-20, COURT, 32);
+  stables.rotation.y = Math.PI;
+  addArch(stables, -5, 1.35, 2.15);
   addArch(stables, 0, 1.35, 2.15);
-  addArch(stables, 4.2, 1.35, 2.15);
+  addArch(stables, 5, 1.35, 2.15);
   scene.add(stables);
 
   const gate = new THREE.Group();
-  gate.position.set(33.1, COURT, -1.2);
-  gate.rotation.y = Math.PI / 2;
+  gate.position.set(2, COURT, 46);
   addArch(gate, -2.3, 1.45, 2.7);
   addArch(gate, 0, 1.85, 3.25);
   addArch(gate, 2.3, 1.45, 2.7);
@@ -954,28 +954,35 @@ export function mountPalace(
   gate.add(localBox(matCarve, 0, 4.2, 0.35, 6.6, 0.42, 0.32));
   gate.add(localBox(matCarve, 0, 4.62, 0.48, 3.2, 0.32, 0.26));
   gate.add(localBox(matSand, 0, 4.95, 0.55, 1.4, 0.28, 0.2));
-  addChhatri(33.1, COURT + 4.05, -1.2, 0.62);
-  addChhatri(33.1, COURT + 3.7, 1.05, 0.48);
-  addChhatri(33.1, COURT + 3.7, -3.45, 0.48);
+  addChhatri(2, COURT + 4.05, 46, 0.62);
+  addChhatri(2, COURT + 3.7, 44.2, 0.48);
+  addChhatri(2, COURT + 3.7, 47.8, 0.48);
+  const bastionMesh = (x: number, z: number) => {
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.5, 7.2, 10), matMasonry);
+    drum.position.set(x, COURT + 3.6, z);
+    scene.add(drum);
+  };
+  bastionMesh(-6.5, 48);
+  bastionMesh(10.5, 48);
 
   const pol = new THREE.Group();
-  pol.position.set(40.2, 0, -1.2);
-  pol.rotation.y = Math.PI / 2;
+  pol.position.set(0, 0, 20);
   addArch(pol, 0, 2.3, 3.5);
   pol.add(localBox(matMasonry, -2.1, 2, 0, 0.8, 4.2, 1.5));
   pol.add(localBox(matMasonry, 2.1, 2, 0, 0.8, 4.2, 1.5));
+  pol.add(localBox(matCarve, 0, 4.35, 0.3, 4.4, 0.36, 0.28));
   scene.add(pol);
   for (let i = 0; i < 4; i++) {
     const h = 0.42 + i * 0.38;
-    addBox(38.6 - i * 0.95, h / 2, -1.2, 0.95, h, 5.4, matAshlar);
+    addBox(0, h / 2, 16.2 + i * 0.85, 5.2, h, 0.9, matAshlar);
   }
 
   addBox(-22, COURT + 1.5, 6, 3.4, 3, 3.4, matAshlar);
   addSpire(-22, 6, 6.5, COURT + 2.8);
   addNiche(-22, COURT + 1.6, 7.75, 0, 0.7, 0.9);
 
-  const shivaX = -15.6;
-  const shivaZ = -16.4;
+  const shivaX = -14;
+  const shivaZ = 26;
   addBox(shivaX, 1.6, shivaZ, 7.2, 3.2, 7.2, matCarve);
   addBox(shivaX, 3.35, shivaZ, 7.6, 0.35, 7.6, matRubble);
   addBox(shivaX, 4.5, shivaZ + 3.15, 3.2, 2.4, 0.7, matCarve);
@@ -985,8 +992,8 @@ export function mountPalace(
   }
   addSpire(shivaX, shivaZ - 0.4, 2.4, 12.4);
 
-  const vx = 53;
-  const vz = -48;
+  const vx = 72;
+  const vz = 56;
   const terrace = 1.5;
   const faceAt = (heightOnShaft: number) => {
     const t = Math.min(1, Math.max(0, heightOnShaft / 33.7));
@@ -1017,7 +1024,7 @@ export function mountPalace(
       [-1, 0, -Math.PI / 2],
     ];
     for (const [fx, fz, rot] of faces) {
-      const door = s === 0 && fz === 1;
+      const door = s === 0 && fz === -1;
       const ow = door ? 1.7 : 0.95;
       const oh = door ? 2.6 : Math.min(1.7, h * 0.48);
       addBox(vx + fx * (o + 0.06), yS + (door ? 1.7 : h * 0.48), vz + fz * (o + 0.06), fx === 0 ? ow : 0.12, oh, fz === 0 ? ow : 0.12, matDark);
@@ -1036,7 +1043,27 @@ export function mountPalace(
     yS += h;
   });
   addDome(vx, yS, vz, 1.7, matMarble, false, false);
-  addFigure(vx + 7.2, 0, vz + 7.4, 2.4, "stand", 0x6e3b2a);
+  addFigure(vx - 8, 0, vz - 8, -0.6, "stand", 0x6e3b2a);
+
+  addFloor(2, COURT + 0.02, 33, 24, 18, matCourt);
+  addFloor(26, 0.06, 30, 14, 16, matLawn);
+  addBox(58, 4.2, 0, 26, 8.4, 20, matPlaster);
+  addBox(58, 4.6, 0, 26.5, 0.35, 20.4, matRubble);
+  addFloor(58, 0.1, 0, 12, 10, matCourt);
+  addDome(58, 8.6, -6, 2.8, matPlaster, false, false);
+  addBox(54, 3.1, 26, 16, 6.2, 11, matMasonry);
+  addBox(54, 3.3, 26, 16.4, 0.3, 11.3, matRubble);
+  addFloor(38, 0.03, 12, 5.5, 64, matFloor);
+  const kund = new THREE.Mesh(
+    new THREE.CircleGeometry(6.5, 24),
+    new THREE.MeshStandardMaterial({ color: 0x243e3c, roughness: 0.18, metalness: 0.12 }),
+  );
+  kund.rotation.x = -Math.PI / 2;
+  kund.position.set(-6, 0.08, 60);
+  scene.add(kund);
+  addBox(56, 2.4, 48, 9, 4.8, 9, matCarve);
+  addSpire(56, 48, 7.5, 4.6);
+  addBox(-40, 4.2, 8, 1.6, 8.4, 78, matMasonry);
 
   addBox(-8, COURT + 0.9, 22, 4, 1.8, 2.2, matDark);
   addBox(6, 0.45, 24.5, 2.2, 0.9, 1.4, matDark);
@@ -1688,6 +1715,19 @@ export function mountPalace(
       }
     },
     setTime: applyTime,
+    setWire(on: boolean) {
+      const seen = new Set<THREE.Material>();
+      scene.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (!mesh.material) return;
+        const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        for (const mat of list) {
+          if (seen.has(mat) || !("wireframe" in mat)) continue;
+          seen.add(mat);
+          (mat as THREE.MeshStandardMaterial).wireframe = on;
+        }
+      });
+    },
     dispose() {
       alive = false;
       canvas.removeEventListener("pointermove", onMove);
