@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-17 — Carving, and grass kept off the walls
+
+- The hillside no longer cuts through the palace. The grass starts at the fort edge and runs down the slope; the lawn outside the zanana sits beyond the stone, not inside it.
+- Vijay Stambh and the Shiva shrine carry a carved sandstone relief: niche frames and standing figures, read by the light as raised stone. Each storey of the tower has a projecting balcony, as on the real stambh.
+- Jharokhas gained a carved eave. Four more balconies sit on the south face of the great dome block.
+- The valley town sits at the foot of that slope again.
+- This is still a live view, not a path-traced film. A full ray-traced pass of every sculpture would freeze the picture, the way the last shadow pass did. The figures are in the stone’s relief.
+
 ## 2026-10-17 — The view moves again
 
 - The palace was stalling because every mouse move tested the whole model, and every stone cast a soft shadow. Hover now uses one invisible box per room, and only the large walls cast a simple shadow.

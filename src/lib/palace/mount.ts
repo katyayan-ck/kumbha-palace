@@ -297,7 +297,89 @@ function makeMaps() {
   fresco.colorSpace = THREE.SRGBColorSpace;
   fresco.anisotropy = 8;
 
-  return { plaster, ashlar, masonry, rubble, floor, court, jali, fresco };
+  const carveRng = mulberry32(23);
+  const carveCanvas = document.createElement("canvas");
+  carveCanvas.width = 512;
+  carveCanvas.height = 512;
+  const cg = carveCanvas.getContext("2d");
+  const heightCanvas = document.createElement("canvas");
+  heightCanvas.width = 512;
+  heightCanvas.height = 512;
+  const hg = heightCanvas.getContext("2d");
+  if (!cg || !hg) throw new Error("carve");
+  const paintCarve = (g: CanvasRenderingContext2D, color: boolean) => {
+    const s = 512;
+    g.fillStyle = color ? "#e6d2b4" : "#b4b4b4";
+    g.fillRect(0, 0, s, s);
+    const rows = 4;
+    for (let row = 0; row < rows; row++) {
+      const band = s / rows;
+      const y = row * band;
+      g.fillStyle = color ? (row % 2 ? "#d9c4a4" : "#c9b08e") : row % 2 ? "#c8c8c8" : "#a0a0a0";
+      g.fillRect(0, y + 2, s, band - 4);
+      g.strokeStyle = color ? "#6d5340" : "#404040";
+      g.lineWidth = 3;
+      g.strokeRect(2, y + 3, s - 4, band - 6);
+      for (let i = 0; i < 4; i++) {
+        const x = (i + 0.5) * (s / 4);
+        const nw = 78;
+        const nh = band * 0.7;
+        const y0 = y + band * 0.16;
+        g.fillStyle = color ? "#a88462" : "#6a6a6a";
+        g.fillRect(x - nw / 2, y0, nw, nh);
+        g.fillStyle = color ? "#7a5a3c" : "#3a3a3a";
+        g.beginPath();
+        g.arc(x, y0 + nh * 0.62, 24, Math.PI, 0);
+        g.fill();
+        g.fillStyle = color ? "#f3e6d0" : "#f2f2f2";
+        g.fillRect(x - 7, y0 + nh * 0.34, 14, nh * 0.4);
+        g.beginPath();
+        g.arc(x, y0 + nh * 0.28, 8, 0, Math.PI * 2);
+        g.fill();
+        if (color && carveRng() > 0.4) {
+          g.strokeStyle = "rgba(90,60,40,0.35)";
+          g.strokeRect(x - nw / 2 - 6, y0 - 4, nw + 12, nh + 8);
+        }
+      }
+    }
+  };
+  paintCarve(cg, true);
+  paintCarve(hg, false);
+  const carve = new THREE.CanvasTexture(carveCanvas);
+  carve.colorSpace = THREE.SRGBColorSpace;
+  carve.wrapS = THREE.RepeatWrapping;
+  carve.wrapT = THREE.RepeatWrapping;
+  carve.anisotropy = 8;
+  const hData = hg.getImageData(0, 0, 512, 512).data;
+  const normalCanvas = document.createElement("canvas");
+  normalCanvas.width = 512;
+  normalCanvas.height = 512;
+  const ng = normalCanvas.getContext("2d");
+  if (!ng) throw new Error("normal");
+  const nImg = ng.createImageData(512, 512);
+  const sample = (x: number, y: number) => hData[(((y + 512) % 512) * 512 + ((x + 512) % 512)) * 4] / 255;
+  for (let y = 0; y < 512; y++) {
+    for (let x = 0; x < 512; x++) {
+      const dx = sample(x + 1, y) - sample(x - 1, y);
+      const dy = sample(x, y + 1) - sample(x, y - 1);
+      const nx = -dx * 2.4;
+      const ny = -dy * 2.4;
+      const nz = 1;
+      const len = Math.hypot(nx, ny, nz);
+      const i = (y * 512 + x) * 4;
+      nImg.data[i] = (nx / len) * 127 + 128;
+      nImg.data[i + 1] = (ny / len) * 127 + 128;
+      nImg.data[i + 2] = (nz / len) * 127 + 128;
+      nImg.data[i + 3] = 255;
+    }
+  }
+  ng.putImageData(nImg, 0, 0);
+  const carveN = new THREE.CanvasTexture(normalCanvas);
+  carveN.colorSpace = THREE.NoColorSpace;
+  carveN.wrapS = THREE.RepeatWrapping;
+  carveN.wrapT = THREE.RepeatWrapping;
+
+  return { plaster, ashlar, masonry, rubble, floor, court, jali, fresco, carve, carveN };
 }
 
 type Col = { x: number; y: number; z: number; s: number; h: number };
@@ -378,8 +460,8 @@ export function mountPalace(
     color: 0x4caf3a,
     roughness: 0.9,
     metalness: 0,
-    emissive: 0x246818,
-    emissiveIntensity: 0.9,
+    emissive: 0x1a4c16,
+    emissiveIntensity: 0.22,
   });
   const matTownA = new THREE.MeshStandardMaterial({ color: 0xc4b49a, roughness: 1 });
   const matTownB = new THREE.MeshStandardMaterial({ color: 0xa36a52, roughness: 1 });
@@ -396,6 +478,13 @@ export function mountPalace(
     roughness: 0.7,
     side: THREE.DoubleSide,
     color: 0xf3e6d0,
+  });
+  const matCarve = new THREE.MeshStandardMaterial({
+    map: maps.carve,
+    normalMap: maps.carveN,
+    normalScale: new THREE.Vector2(1.15, 1.15),
+    roughness: 0.74,
+    metalness: 0,
   });
   const matFresco = new THREE.MeshBasicMaterial({
     map: maps.fresco,
@@ -603,7 +692,8 @@ export function mountPalace(
     g.add(localBox(matAshlar, -0.55, 0.55, 0.45, 0.1, 0.9, 0.1));
     g.add(localBox(matAshlar, 0, 0.55, 0.45, 0.1, 0.9, 0.1));
     g.add(localBox(matAshlar, 0.55, 0.55, 0.45, 0.1, 0.9, 0.1));
-    g.add(localBox(matAshlar, 0, 1.05, 0.45, 1.6, 0.1, 0.95));
+    g.add(localBox(matCarve, 0, 1.05, 0.45, 1.6, 0.1, 0.95));
+    g.add(localBox(matCarve, 0, 1.22, 0.62, 1.85, 0.08, 0.42));
     g.add(localBox(matRubble, -0.45, -0.15, 0.2, 0.16, 0.28, 0.28));
     g.add(localBox(matRubble, 0.45, -0.15, 0.2, 0.16, 0.28, 0.28));
     scene.add(g);
@@ -797,6 +887,7 @@ export function mountPalace(
   addJharokha(T.x - T.w / 2, COURT + 10.6, T.z - 1.6, -Math.PI / 2);
   addJharokha(T.x - T.w / 2, COURT + 10.6, T.z + 2.5, -Math.PI / 2);
   addJharokha(T.x - 2.2, COURT + 11.4, T.z + T.d / 2, 0);
+  for (const lx of [-4.2, -1.4, 1.4, 4.2]) addJharokha(T.x + lx, COURT + 12.4, 11.55, 0);
 
   const W = { x: -18, z: 17, w: 9.4, d: 9.2, h: 10.4 };
   addBox(W.x, COURT + W.h / 2, W.z, W.w, W.h, W.d, matPlaster);
@@ -830,9 +921,8 @@ export function mountPalace(
     crown.position.set(x, COURT + 2.35 * s, z);
     scene.add(crown);
   };
-  courtTree(-3.4, -1.6, 1.15);
-  courtTree(5.6, -5.4, 0.95);
-  courtTree(1.4, 6.8, 1.05);
+  courtTree(4.2, -9.2, 0.85);
+  courtTree(11.2, 16.5, 0.9);
   addFigure(-0.8, COURT + 0.06, -0.6, 0.5, "stand", 0x6e3b2a);
   addFigure(3.6, COURT + 0.06, 2.1, -0.8, "stand", 0xd7c4a2);
   addFigure(6.8, COURT + 0.06, -3.8, 1.4, "stand", 0x243e32);
@@ -879,24 +969,25 @@ export function mountPalace(
 
   const shivaX = -15.6;
   const shivaZ = -16.4;
-  addBox(shivaX, 1.6, shivaZ, 7.2, 3.2, 7.2, matAshlar);
+  addBox(shivaX, 1.6, shivaZ, 7.2, 3.2, 7.2, matCarve);
   addBox(shivaX, 3.35, shivaZ, 7.6, 0.35, 7.6, matRubble);
-  addBox(shivaX, 4.5, shivaZ + 3.15, 3.2, 2.4, 0.7, matAshlar);
+  addBox(shivaX, 4.5, shivaZ + 3.15, 3.2, 2.4, 0.7, matCarve);
   for (let i = 0; i < 7; i++) {
     const w = 4.6 - i * 0.48;
-    addBox(shivaX, 5.3 + i * 1.05, shivaZ - 0.4, w, 1.05, w, i % 2 ? matPlaster : matAshlar);
+    addBox(shivaX, 5.3 + i * 1.05, shivaZ - 0.4, w, 1.05, w, matCarve);
   }
   addSpire(shivaX, shivaZ - 0.4, 2.4, 12.4);
 
   const vx = 53;
   const vz = -48;
-  addBox(vx, 1.15, vz, 10.4, 2.3, 10.4, matAshlar);
+  addBox(vx, 1.15, vz, 10.4, 2.3, 10.4, matCarve);
   addBox(vx, 2.45, vz, 11.2, 0.4, 11.2, matRubble);
   let storeyY = 2.6;
   for (let s = 0; s < 9; s++) {
     const w = 8.4 * (1 - s * 0.042);
     const h = s === 0 ? 4.1 : 3.25;
-    addBox(vx, storeyY + h / 2, vz, w, h, w, s % 2 ? matPlaster : matAshlar);
+    addBox(vx, storeyY + h / 2, vz, w, h, w, matCarve);
+    addBox(vx, storeyY + h - 0.16, vz, w + 1.25, 0.28, w + 1.25, matAshlar);
     const o = w / 2;
     for (const [sx, sz] of [
       [-1, -1],
@@ -952,7 +1043,7 @@ export function mountPalace(
     const d = 3.2 + townRng() * 7;
     const tall = townRng() > 0.92;
     const h = 3 + townRng() * (tall ? 16 : 8);
-    dummyTown.position.set(-80 + townRng() * 210, -54 + h / 2, 150 + townRng() * 160);
+    dummyTown.position.set(-70 + townRng() * 180, -72 + h / 2, 178 + townRng() * 80);
     dummyTown.scale.set(w, h, d);
     dummyTown.rotation.set(0, 0, 0);
     dummyTown.updateMatrix();
@@ -1133,7 +1224,7 @@ export function mountPalace(
     pier(winZ1 + 0.26, winY1 + 0.7);
     addBox(-2.28, skyY0 - 0.02, (skyZ0 + skyZ1) / 2, 0.72, 0.26, skyZ1 - skyZ0 + 0.55, matAshlar);
     addBox(cx, y, southZ, half * 2, h, t, matAshlar);
-    const lawn = addFloor(1.45, COURT + 0.34, 0.42, 6.3, 4.05, matLawn);
+    const lawn = addFloor(2.55, COURT + 0.2, 0.45, 3.5, 3.2, matLawn);
     lawn.receiveShadow = false;
     const garden = new THREE.DirectionalLight(0xe7ffd4, 1.35);
     garden.position.set(7.5, 7.2, 0.4);
@@ -1306,20 +1397,42 @@ export function mountPalace(
   }
 
   function buildCliff() {
-    const earth = new THREE.Mesh(new THREE.PlaneGeometry(280, 190), matEarth);
-    earth.rotation.x = -Math.PI / 2 + ALPHA;
-    earth.position.set(18, -29, 93);
-    earth.receiveShadow = true;
-    scene.add(earth);
-    const green = new THREE.Mesh(new THREE.PlaneGeometry(300, 210), matFoliage);
-    green.rotation.x = -Math.PI / 2 + ALPHA;
-    const n = new THREE.Vector3(0, Math.cos(ALPHA), Math.sin(ALPHA));
-    green.position.set(18, -29, 93).addScaledVector(n, 0.24);
-    green.receiveShadow = true;
-    scene.add(green);
-    const valley = new THREE.Mesh(new THREE.PlaneGeometry(420, 210), matValley);
+    const slopeSheet = (z0: number, z1: number, x0: number, x1: number, mat: THREE.Material, lift: number) => {
+      const segZ = 16;
+      const segX = 8;
+      const row = segX + 1;
+      const pos: number[] = [];
+      const uv: number[] = [];
+      const idx: number[] = [];
+      for (let iz = 0; iz <= segZ; iz++) {
+        const z = z0 + ((z1 - z0) * iz) / segZ;
+        const y = slopeY(z) + lift;
+        for (let ix = 0; ix <= segX; ix++) {
+          const x = x0 + ((x1 - x0) * ix) / segX;
+          pos.push(x, y, z);
+          uv.push((ix / segX) * 5, (iz / segZ) * 8);
+        }
+      }
+      for (let iz = 0; iz < segZ; iz++) {
+        for (let ix = 0; ix < segX; ix++) {
+          const a = iz * row + ix;
+          idx.push(a, a + row, a + 1, a + 1, a + row, a + row + 1);
+        }
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      geo.setIndex(idx);
+      geo.computeVertexNormals();
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+    };
+    slopeSheet(34, 178, -90, 80, matEarth, -0.2);
+    slopeSheet(34, 172, -86, 76, matFoliage, 0.08);
+    const valley = new THREE.Mesh(new THREE.PlaneGeometry(420, 180), matValley);
     valley.rotation.x = -Math.PI / 2;
-    valley.position.set(24, -54, 255);
+    valley.position.set(10, -72, 310);
     scene.add(valley);
 
     curtain(-22, 38, -2, 50, 5.0);
