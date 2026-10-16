@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { findPart, type PartInfo } from "@/lib/palace/parts";
+import { PARTS, type PartInfo } from "@/lib/palace/parts";
 
 export type PalaceHandle = {
   setView: (id: string) => void;
@@ -318,11 +318,12 @@ export function mountPalace(
   camera.lookAt(4, 8, 6);
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.setPixelRatio(1);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.04;
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.BasicShadowMap;
   renderer.shadowMap.type = THREE.PCFShadowMap;
 
   const hemi = new THREE.HemisphereLight(0x9ec8e4, 0xc4a06a, 0.62);
@@ -330,7 +331,7 @@ export function mountPalace(
   const sun = new THREE.DirectionalLight(0xfff1d6, 2.05);
   sun.position.set(42, 52, 18);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.mapSize.set(512, 512);
   sun.shadow.camera.near = 2;
   sun.shadow.camera.far = 180;
   sun.shadow.camera.left = -80;
@@ -437,7 +438,7 @@ export function mountPalace(
   function addBox(x: number, y: number, z: number, w: number, h: number, d: number, mat: THREE.Material) {
     const mesh = new THREE.Mesh(bakeBox(w, h, d, x, y, z), mat);
     mesh.position.set(x, y, z);
-    mesh.castShadow = true;
+    mesh.castShadow = w * h * d > 40;
     mesh.receiveShadow = true;
     scene.add(mesh);
     return mesh;
@@ -446,7 +447,7 @@ export function mountPalace(
   function localBox(mat: THREE.Material, x: number, y: number, z: number, w: number, h: number, d: number) {
     const mesh = new THREE.Mesh(bakeBox(w, h, d), mat);
     mesh.position.set(x, y, z);
-    mesh.castShadow = true;
+    mesh.castShadow = false;
     mesh.receiveShadow = true;
     return mesh;
   }
@@ -821,6 +822,20 @@ export function mountPalace(
   addChhatri(-8, COURT + 6.9, -33, 0.7);
   addFloor(-2, COURT + 0.04, -8, 22, 16, matFloor);
   addFloor(-6, COURT + 0.03, 8, 10, 8, matFloor);
+  const courtTree = (x: number, z: number, s = 1) => {
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15 * s, 0.26 * s, 2.1 * s, 6), matWood);
+    trunk.position.set(x, COURT + 1.05 * s, z);
+    scene.add(trunk);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(1.25 * s, 8, 6), matFoliage);
+    crown.position.set(x, COURT + 2.35 * s, z);
+    scene.add(crown);
+  };
+  courtTree(-3.4, -1.6, 1.15);
+  courtTree(5.6, -5.4, 0.95);
+  courtTree(1.4, 6.8, 1.05);
+  addFigure(-0.8, COURT + 0.06, -0.6, 0.5, "stand", 0x6e3b2a);
+  addFigure(3.6, COURT + 0.06, 2.1, -0.8, "stand", 0xd7c4a2);
+  addFigure(6.8, COURT + 0.06, -3.8, 1.4, "stand", 0x243e32);
 
   addBox(24.5, COURT + 2.3, 6, 7.4, 4.6, 15, matMasonry);
   addBox(24.5, COURT + 2.4, 6, 7.7, 0.4, 15.3, matRubble);
@@ -969,7 +984,7 @@ export function mountPalace(
     dummy.updateMatrix();
     colMesh.setMatrixAt(i, dummy.matrix);
   });
-  colMesh.castShadow = true;
+  colMesh.castShadow = false;
   colMesh.receiveShadow = true;
   scene.add(colMesh);
 
@@ -984,7 +999,7 @@ export function mountPalace(
   });
   merMesh.count = merlons.length;
   merMesh.instanceMatrix.needsUpdate = true;
-  merMesh.castShadow = true;
+  merMesh.castShadow = false;
   scene.add(merMesh);
 
   function addFigure(
@@ -1364,12 +1379,26 @@ export function mountPalace(
   const pointer = new THREE.Vector2();
   const hint = new THREE.Box3Helper(new THREE.Box3(), 0xc4a06a);
   hint.visible = false;
-  hint.userData.ignorePick = true;
   hint.raycast = () => {};
   scene.add(hint);
+  const partById = new Map(PARTS.map((part) => [part.id, part]));
+  const pickables: THREE.Mesh[] = PARTS.map((part) => {
+    const w = part.max[0] - part.min[0];
+    const h = part.max[1] - part.min[1];
+    const d = part.max[2] - part.min[2];
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshBasicMaterial());
+    mesh.position.set((part.min[0] + part.max[0]) / 2, (part.min[1] + part.max[1]) / 2, (part.min[2] + part.max[2]) / 2);
+    mesh.visible = false;
+    mesh.userData.partId = part.id;
+    scene.add(mesh);
+    return mesh;
+  });
   let hovered = "";
   let downX = 0;
   let downY = 0;
+  let pickQueued = false;
+  let lastX = 0;
+  let lastY = 0;
 
   function partAt(clientX: number, clientY: number): PartInfo | null {
     const rect = canvas.getBoundingClientRect();
@@ -1377,12 +1406,9 @@ export function mountPalace(
     pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
     pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObjects(scene.children, true);
-    for (const hit of hits) {
-      if (hit.object.userData.ignorePick) continue;
-      return findPart(hit.point.x, hit.point.y, hit.point.z);
-    }
-    return null;
+    const hit = raycaster.intersectObjects(pickables, false)[0];
+    const id = hit?.object.userData.partId as string | undefined;
+    return id ? (partById.get(id) ?? null) : null;
   }
 
   function showHint(part: PartInfo | null) {
@@ -1398,13 +1424,20 @@ export function mountPalace(
   }
 
   function onMove(event: PointerEvent) {
-    const part = partAt(event.clientX, event.clientY);
-    const id = part?.id ?? "";
-    canvas.style.cursor = part ? "pointer" : "";
-    if (id === hovered) return;
-    hovered = id;
-    showHint(part);
-    hooks.onHover?.(part);
+    lastX = event.clientX;
+    lastY = event.clientY;
+    if (pickQueued) return;
+    pickQueued = true;
+    requestAnimationFrame(() => {
+      pickQueued = false;
+      const part = partAt(lastX, lastY);
+      const id = part?.id ?? "";
+      canvas.style.cursor = part ? "pointer" : "";
+      if (id === hovered) return;
+      hovered = id;
+      showHint(part);
+      hooks.onHover?.(part);
+    });
   }
 
   function onDown(event: PointerEvent) {

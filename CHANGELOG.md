@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-17 — The view moves again
+
+- The palace was stalling because every mouse move tested the whole model, and every stone cast a soft shadow. Hover now uses one invisible box per room, and only the large walls cast a simple shadow.
+- Drawing is capped to a single pixel per screen pixel so the preview stays responsive.
+- Three neem trees and three visitors stand in the main court, so the flagstones have a human scale.
+
 ## 2026-10-16 — Rooms you can read
 
 - Hover a part of the palace to see its name, place, and date. Click to pin the longer history.
