@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { PalaceHandle } from "@/lib/palace/mount";
+import type { PartInfo } from "@/lib/palace/parts";
 
 const VIEWS: { id: string; label: string; caption: string }[] = [
   {
@@ -53,6 +54,11 @@ const VIEWS: { id: string; label: string; caption: string }[] = [
     caption: "South-east bastion and the square domed tower beside the tall block.",
   },
   {
+    id: "stambh",
+    label: "Stambh",
+    caption: "Vijay Stambh, nine storeys, standing north-east of the palace.",
+  },
+  {
     id: "sunrise",
     label: "Sunrise",
     caption: "Low light across the south range and the red laterite terrace.",
@@ -73,8 +79,10 @@ export function PalaceViewer() {
   const [view, setView] = useState<string | null>(null);
   const [time, setTime] = useState("morning");
   const [caption, setCaption] = useState(
-    "Drag to look, scroll or pinch to move closer. A mid-15th-century reading of the palace.",
+    "Drag to look. Hover a building, then click it for its history.",
   );
+  const [hover, setHover] = useState<PartInfo | null>(null);
+  const [pinned, setPinned] = useState<PartInfo | null>(null);
 
   useEffect(() => {
     let dead = false;
@@ -82,9 +90,20 @@ export function PalaceViewer() {
     void import("@/lib/palace/mount").then(
       (mod) => {
         if (dead || !canvasRef.current) return;
-        const handle = mod.mountPalace(canvasRef.current, () => {
-          if (!dead) setReady(true);
-        });
+        const handle = mod.mountPalace(
+          canvasRef.current,
+          () => {
+            if (!dead) setReady(true);
+          },
+          {
+            onHover: (part) => {
+              if (!dead) setHover(part);
+            },
+            onSelect: (part) => {
+              if (!dead) setPinned(part);
+            },
+          },
+        );
         handleRef.current = handle;
         dispose = () => handle.dispose();
       },
@@ -130,6 +149,13 @@ export function PalaceViewer() {
             <p className="font-sans text-xs tracking-wide text-muted">Chittorgarh · Mewar</p>
           </div>
           <div className="pointer-events-auto ml-auto flex flex-wrap gap-2">
+            <a
+              href="/kumbha-palace-src.zip"
+              download="kumbha-palace-src.zip"
+              className="inline-flex min-h-11 items-center border border-sand bg-sand px-3 font-sans text-sm text-ink"
+            >
+              Download source
+            </a>
             {TIMES.map((item) => (
               <button
                 key={item.id}
@@ -167,9 +193,33 @@ export function PalaceViewer() {
       <footer className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-ink px-3 py-2">
         <p className="text-center font-sans text-sm text-plaster">{caption}</p>
         <p className="text-center font-sans text-xs text-muted">
-          Interpretive restoration from the standing ruins and in-complex photographs. Not a measured survey.
+          Hover for the name. Click for the history. Interpretive restoration, not a measured survey.
         </p>
       </footer>
+
+      {(pinned || hover) && (
+        <aside className="pointer-events-auto absolute bottom-16 left-3 z-10 max-h-[46vh] w-[min(28rem,calc(100%-1.5rem))] overflow-y-auto border border-sand bg-ink/95 p-3 shadow-lg">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="font-display text-2xl leading-none">{(pinned ?? hover)?.title}</h2>
+            {pinned && (
+              <button
+                type="button"
+                className="min-h-11 shrink-0 border border-muted px-3 font-sans text-sm"
+                onClick={() => setPinned(null)}
+              >
+                Close
+              </button>
+            )}
+          </div>
+          <p className="mt-2 font-sans text-xs tracking-wide text-sand">{(pinned ?? hover)?.where}</p>
+          <p className="mt-1 font-sans text-xs text-muted">{(pinned ?? hover)?.built}</p>
+          <p className="mt-2 font-sans text-sm text-plaster">{(pinned ?? hover)?.summary}</p>
+          {pinned && <p className="mt-2 font-sans text-sm leading-relaxed text-plaster">{pinned.history}</p>}
+          {!pinned && hover && (
+            <p className="mt-2 font-sans text-xs text-muted">Click to keep this note open.</p>
+          )}
+        </aside>
+      )}
     </main>
   );
 }

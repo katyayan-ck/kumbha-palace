@@ -1,10 +1,16 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { findPart, type PartInfo } from "@/lib/palace/parts";
 
 export type PalaceHandle = {
   setView: (id: string) => void;
   setTime: (id: "morning" | "noon" | "evening" | string) => void;
   dispose: () => void;
+};
+
+export type PalaceHooks = {
+  onHover?: (part: PartInfo | null) => void;
+  onSelect?: (part: PartInfo | null) => void;
 };
 
 type V3 = [number, number, number];
@@ -17,10 +23,11 @@ const PRESETS: Record<string, { pos: V3; target: V3 }> = {
   cliff: { pos: [-58, 32, -6], target: [10, 6, 78] },
   court: { pos: [2, 7.5, 16], target: [0, 3, -8] },
   diwan: { pos: [1, 3.4, -8], target: [0, 2.6, -16] },
-  aerial: { pos: [14, 86, 68], target: [2, 4, -10] },
+  aerial: { pos: [28, 78, 62], target: [6, 8, -18] },
   sunrise: { pos: [28, 16, 48], target: [8, 12, 4] },
   zenana: { pos: [-2, 8, -24], target: [-4, 3, -34] },
   bastion: { pos: [42, 10, 40], target: [20, 8, 18] },
+  stambh: { pos: [78, 24, -28], target: [53, 16, -48] },
 };
 
 const COURT = 1.55;
@@ -296,7 +303,11 @@ function makeMaps() {
 type Col = { x: number; y: number; z: number; s: number; h: number };
 type Mer = { x: number; y: number; z: number };
 
-export function mountPalace(canvas: HTMLCanvasElement, onReady: () => void): PalaceHandle {
+export function mountPalace(
+  canvas: HTMLCanvasElement,
+  onReady: () => void,
+  hooks: PalaceHooks = {},
+): PalaceHandle {
   const maps = makeMaps();
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x9ec8e4);
@@ -782,6 +793,9 @@ export function mountPalace(canvas: HTMLCanvasElement, onReady: () => void): Pal
   addRectWin(T.x + T.w / 2 + 0.05, COURT + 6.5, T.z + 1, Math.PI / 2, 0.7, 1.2);
   addRectWin(T.x + T.w / 2 + 0.05, COURT + 6.5, T.z - 2.2, Math.PI / 2, 0.7, 1.2);
   addJharokha(T.x + T.w / 2, COURT + 10.2, T.z + 2.2, Math.PI / 2);
+  addJharokha(T.x - T.w / 2, COURT + 10.6, T.z - 1.6, -Math.PI / 2);
+  addJharokha(T.x - T.w / 2, COURT + 10.6, T.z + 2.5, -Math.PI / 2);
+  addJharokha(T.x - 2.2, COURT + 11.4, T.z + T.d / 2, 0);
 
   const W = { x: -18, z: 17, w: 9.4, d: 9.2, h: 10.4 };
   addBox(W.x, COURT + W.h / 2, W.z, W.w, W.h, W.d, matPlaster);
@@ -799,6 +813,8 @@ export function mountPalace(canvas: HTMLCanvasElement, onReady: () => void): Pal
   addRectWin(0, COURT + 3.6, -16.55, 0, 1.1, 1.5);
   addRectWin(-3.2, COURT + 3.4, -16.55, 0, 0.7, 1.1);
   addRectWin(3.2, COURT + 3.4, -16.55, 0, 0.7, 1.1);
+  addJharokha(-4.2, COURT + 6.5, -16.55, 0);
+  addJharokha(4.2, COURT + 6.5, -16.55, 0);
 
   addBox(-4, COURT + 3.4, -33, 16, 6.8, 8, matPlaster);
   addBox(8, COURT + 2.6, -31, 10, 5.2, 7, matMasonry);
@@ -845,6 +861,39 @@ export function mountPalace(canvas: HTMLCanvasElement, onReady: () => void): Pal
   addBox(-22, COURT + 1.5, 6, 3.4, 3, 3.4, matAshlar);
   addSpire(-22, 6, 6.5, COURT + 2.8);
   addNiche(-22, COURT + 1.6, 7.75, 0, 0.7, 0.9);
+
+  const shivaX = -15.6;
+  const shivaZ = -16.4;
+  addBox(shivaX, 1.6, shivaZ, 7.2, 3.2, 7.2, matAshlar);
+  addBox(shivaX, 3.35, shivaZ, 7.6, 0.35, 7.6, matRubble);
+  addBox(shivaX, 4.5, shivaZ + 3.15, 3.2, 2.4, 0.7, matAshlar);
+  for (let i = 0; i < 7; i++) {
+    const w = 4.6 - i * 0.48;
+    addBox(shivaX, 5.3 + i * 1.05, shivaZ - 0.4, w, 1.05, w, i % 2 ? matPlaster : matAshlar);
+  }
+  addSpire(shivaX, shivaZ - 0.4, 2.4, 12.4);
+
+  const vx = 53;
+  const vz = -48;
+  addBox(vx, 1.15, vz, 10.4, 2.3, 10.4, matAshlar);
+  addBox(vx, 2.45, vz, 11.2, 0.4, 11.2, matRubble);
+  let storeyY = 2.6;
+  for (let s = 0; s < 9; s++) {
+    const w = 8.4 * (1 - s * 0.042);
+    const h = s === 0 ? 4.1 : 3.25;
+    addBox(vx, storeyY + h / 2, vz, w, h, w, s % 2 ? matPlaster : matAshlar);
+    const o = w / 2;
+    for (const [sx, sz] of [
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1],
+    ] as const) {
+      addBox(vx + sx * o, storeyY + h / 2, vz + sz * o, 0.62, h + 0.15, 0.62, matAshlar);
+    }
+    storeyY += h;
+  }
+  addDome(vx, storeyY, vz, 2.15, matPlaster, false, false);
 
   addBox(-8, COURT + 0.9, 22, 4, 1.8, 2.2, matDark);
   addBox(6, 0.45, 24.5, 2.2, 0.9, 1.4, matDark);
@@ -1311,6 +1360,70 @@ export function mountPalace(canvas: HTMLCanvasElement, onReady: () => void): Pal
     }
   });
 
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  const hint = new THREE.Box3Helper(new THREE.Box3(), 0xc4a06a);
+  hint.visible = false;
+  hint.userData.ignorePick = true;
+  hint.raycast = () => {};
+  scene.add(hint);
+  let hovered = "";
+  let downX = 0;
+  let downY = 0;
+
+  function partAt(clientX: number, clientY: number): PartInfo | null {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width < 2 || rect.height < 2) return null;
+    pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(scene.children, true);
+    for (const hit of hits) {
+      if (hit.object.userData.ignorePick) continue;
+      return findPart(hit.point.x, hit.point.y, hit.point.z);
+    }
+    return null;
+  }
+
+  function showHint(part: PartInfo | null) {
+    if (!part) {
+      hint.visible = false;
+      return;
+    }
+    hint.box.set(
+      new THREE.Vector3(part.min[0], part.min[1], part.min[2]),
+      new THREE.Vector3(part.max[0], part.max[1], part.max[2]),
+    );
+    hint.visible = true;
+  }
+
+  function onMove(event: PointerEvent) {
+    const part = partAt(event.clientX, event.clientY);
+    const id = part?.id ?? "";
+    canvas.style.cursor = part ? "pointer" : "";
+    if (id === hovered) return;
+    hovered = id;
+    showHint(part);
+    hooks.onHover?.(part);
+  }
+
+  function onDown(event: PointerEvent) {
+    downX = event.clientX;
+    downY = event.clientY;
+  }
+
+  function onUp(event: PointerEvent) {
+    if (Math.hypot(event.clientX - downX, event.clientY - downY) > 8) return;
+    const part = partAt(event.clientX, event.clientY);
+    showHint(part);
+    hovered = part?.id ?? "";
+    hooks.onSelect?.(part);
+  }
+
+  canvas.addEventListener("pointermove", onMove);
+  canvas.addEventListener("pointerdown", onDown);
+  canvas.addEventListener("pointerup", onUp);
+
   function resize() {
     const w = canvas.clientWidth || window.innerWidth;
     const h = canvas.clientHeight || window.innerHeight;
@@ -1394,6 +1507,9 @@ export function mountPalace(canvas: HTMLCanvasElement, onReady: () => void): Pal
     setTime: applyTime,
     dispose() {
       alive = false;
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerdown", onDown);
+      canvas.removeEventListener("pointerup", onUp);
       renderer.setAnimationLoop(null);
       controls.dispose();
       timer.disconnect();
