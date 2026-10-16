@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-17 — Vijay Stambh to the measured tower
+
+- The victory tower is no longer a stack of equal boxes. It follows the surveyed column: 37.19 m to the cupola, faces 10.67 m at the base and 5.33 m under the dome, on a terrace 12.8 m square.
+- Nine storeys. Each face has an opening and a two-column portico. Courses alternate red sandstone and white marble. The ground floor, facing the palace, is a carved entrance with a stepped torana.
+- A standing figure at the foot is 1.7 m, so the height can be judged.
+- The Tripolia gate carries the same carved torana, reduced to the scale of a palace door.
+- The real tower is about 450 m south-east of the palace. It is drawn at true size beside the house so both can be read. The named images of the gods stay in the relief; cutting each one as its own mesh would stop the view.
+- Unreal Engine 5 would be the right file for a path-traced, walkable tower on a Windows machine. This preview is the browser model, so the tower is built in it, not in Unreal.
+
 ## 2026-10-17 — Carving, and grass kept off the walls
 
 - The hillside no longer cuts through the palace. The grass starts at the fort edge and runs down the slope; the lawn outside the zanana sits beyond the stone, not inside it.

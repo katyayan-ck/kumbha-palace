@@ -27,7 +27,7 @@ const PRESETS: Record<string, { pos: V3; target: V3 }> = {
   sunrise: { pos: [28, 16, 48], target: [8, 12, 4] },
   zenana: { pos: [-2, 8, -24], target: [-4, 3, -34] },
   bastion: { pos: [42, 10, 40], target: [20, 8, 18] },
-  stambh: { pos: [78, 24, -28], target: [53, 16, -48] },
+  stambh: { pos: [88, 18, -20], target: [53, 18, -48] },
 };
 
 const COURT = 1.55;
@@ -486,6 +486,10 @@ export function mountPalace(
     roughness: 0.74,
     metalness: 0,
   });
+  const matSand = matCarve.clone();
+  matSand.color.set(0xc4896a);
+  const matMarble = matPlaster.clone();
+  matMarble.color.set(0xf7f1e6);
   const matFresco = new THREE.MeshBasicMaterial({
     map: maps.fresco,
     side: THREE.DoubleSide,
@@ -947,6 +951,9 @@ export function mountPalace(
   gate.add(localBox(matMasonry, 3.35, 2, 0, 0.7, 4, 1.3));
   gate.add(localBox(matAshlar, 0, 3.7, 0, 8.2, 0.35, 1.4));
   scene.add(gate);
+  gate.add(localBox(matCarve, 0, 4.2, 0.35, 6.6, 0.42, 0.32));
+  gate.add(localBox(matCarve, 0, 4.62, 0.48, 3.2, 0.32, 0.26));
+  gate.add(localBox(matSand, 0, 4.95, 0.55, 1.4, 0.28, 0.2));
   addChhatri(33.1, COURT + 4.05, -1.2, 0.62);
   addChhatri(33.1, COURT + 3.7, 1.05, 0.48);
   addChhatri(33.1, COURT + 3.7, -3.45, 0.48);
@@ -980,14 +987,20 @@ export function mountPalace(
 
   const vx = 53;
   const vz = -48;
-  addBox(vx, 1.15, vz, 10.4, 2.3, 10.4, matCarve);
-  addBox(vx, 2.45, vz, 11.2, 0.4, 11.2, matRubble);
-  let storeyY = 2.6;
-  for (let s = 0; s < 9; s++) {
-    const w = 8.4 * (1 - s * 0.042);
-    const h = s === 0 ? 4.1 : 3.25;
-    addBox(vx, storeyY + h / 2, vz, w, h, w, matCarve);
-    addBox(vx, storeyY + h - 0.16, vz, w + 1.25, 0.28, w + 1.25, matAshlar);
+  const terrace = 1.5;
+  const faceAt = (heightOnShaft: number) => {
+    const t = Math.min(1, Math.max(0, heightOnShaft / 33.7));
+    return 10.67 + (5.33 - 10.67) * t;
+  };
+  addBox(vx, terrace / 2, vz, 12.8, terrace, 12.8, matAshlar);
+  const storeys = [5.2, 3.6, 3.6, 3.6, 3.6, 3.5, 3.5, 3.4, 3.3];
+  let yS = terrace;
+  storeys.forEach((h, s) => {
+    const mid = yS + h / 2 - terrace;
+    const w = faceAt(mid);
+    const skin = s % 2 === 0 ? matSand : matMarble;
+    addBox(vx, yS + h / 2, vz, w, h, w, skin);
+    addBox(vx, yS + h - 0.14, vz, w + 0.85, 0.26, w + 0.85, matAshlar);
     const o = w / 2;
     for (const [sx, sz] of [
       [-1, -1],
@@ -995,11 +1008,35 @@ export function mountPalace(
       [1, -1],
       [1, 1],
     ] as const) {
-      addBox(vx + sx * o, storeyY + h / 2, vz + sz * o, 0.62, h + 0.15, 0.62, matAshlar);
+      addBox(vx + sx * (o + 0.08), yS + h / 2, vz + sz * (o + 0.08), 0.42, h + 0.08, 0.42, matAshlar);
     }
-    storeyY += h;
-  }
-  addDome(vx, storeyY, vz, 2.15, matPlaster, false, false);
+    const faces: Array<[number, number, number]> = [
+      [0, 1, 0],
+      [0, -1, Math.PI],
+      [1, 0, Math.PI / 2],
+      [-1, 0, -Math.PI / 2],
+    ];
+    for (const [fx, fz, rot] of faces) {
+      const door = s === 0 && fz === 1;
+      const ow = door ? 1.7 : 0.95;
+      const oh = door ? 2.6 : Math.min(1.7, h * 0.48);
+      addBox(vx + fx * (o + 0.06), yS + (door ? 1.7 : h * 0.48), vz + fz * (o + 0.06), fx === 0 ? ow : 0.12, oh, fz === 0 ? ow : 0.12, matDark);
+      const px = vx + fx * (o + 0.55);
+      const pz = vz + fz * (o + 0.55);
+      cols.push({ x: px - fz * 0.55, y: yS + 0.15, z: pz - fx * 0.55, s: 0.42, h: oh });
+      cols.push({ x: px + fz * 0.55, y: yS + 0.15, z: pz + fx * 0.55, s: 0.42, h: oh });
+      addBox(px, yS + oh + 0.2, pz, fx === 0 ? 1.7 : 0.35, 0.16, fz === 0 ? 1.7 : 0.35, matCarve);
+      if (door) {
+        addBox(px, yS + oh + 0.55, pz, 2.4, 0.28, 0.42, matCarve);
+        addBox(px, yS + oh + 0.9, pz, 1.5, 0.24, 0.36, matCarve);
+        addBox(px, yS + oh + 1.2, pz, 0.7, 0.22, 0.28, matSand);
+      }
+      void rot;
+    }
+    yS += h;
+  });
+  addDome(vx, yS, vz, 1.7, matMarble, false, false);
+  addFigure(vx + 7.2, 0, vz + 7.4, 2.4, "stand", 0x6e3b2a);
 
   addBox(-8, COURT + 0.9, 22, 4, 1.8, 2.2, matDark);
   addBox(6, 0.45, 24.5, 2.2, 0.9, 1.4, matDark);

@@ -137,9 +137,9 @@ export const PARTS: PartInfo[] = [
     title: "Vijay Stambh",
     where: "North-east of the palace, inside the fort",
     built: "1440–1448, ordered by Maharana Kumbha",
-    summary: "Nine storeys, about 37 metres, a tower of victory and not part of the house.",
+    summary: "Nine storeys, 37.19 m to the cupola. Face 10.67 m wide at the base, 5.33 m under the dome.",
     history:
-      "The Vijay Stambh stands apart from the palace, to the north-east, where the satellite view shows a tower on the fort road. Kumbha raised it after his campaigns. It is nine storeys of carved sandstone, tapering, with a small dome at the top. The palace gate looks toward it. The carving here is only the mass and the storey count — the real tower is covered in sculpture.",
+      "Rebuilt here to the measured tower, not a sketch. James Tod’s survey, still the figure Wikipedia and the ASI height agree on: the column is 37.19 m (122 ft), each face 35 ft (10.67 m) at the base and 17.5 ft (5.33 m) under the cupola, standing on a terrace 42 ft (12.8 m) square. Nine storeys, an opening and a colonnaded portico on every face, red sandstone and white marble courses. Sutradhar Jaita and his sons Napa, Puja and Poma carved it; their portraits are on the fifth floor. The ground storey is a Vishnu shrine. The top storey bears Padmavati, and the genealogy from Hamir to Kumbha. The word Allah is cut in Arabic on the third and eighth storeys. The real tower stands about 450 m south-east of the palace (24.8879 N, 74.6452 E). It is drawn at true size beside the house so the scale can be read. The figure at its foot is 1.7 m. The niche relief stands in for the thousands of named images; each one as its own mesh would stop the view.",
     min: [46, 0, -58],
     max: [60, 44, -38],
   },
