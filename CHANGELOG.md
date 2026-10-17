@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-18 — Blender file for the laptop
+
+- Added a Blender 4.5 scene and a glTF, in metres, for an RTX 3050 4 GB laptop. Unreal is not run from this preview.
+- The walled palace is 400 by 250 feet. The Vijay Stambh is the surveyed tower. A 1.7 m figure stands at its foot.
+- How to open it, and the Unreal settings that fit 4 GB, are in export/OPEN-IN-BLENDER.md.
+
 ## 2026-10-17 — Precinct and the west wall
 
 - The walled palace is now the plot’s 400 by 250 feet (121.9 by 76.2 metres). The photographed rooms were not enlarged: a doorway is still the height of a person.
