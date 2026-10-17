@@ -162,6 +162,52 @@ def shared_cube_mesh(sx, sy, sz):
 def instance(name, col, mesh, mat, loc, rot=(0, 0, 0), parent=None):
     return mesh_object(name, col, mesh, mat, loc, rot, parent)
 
+def relief_mesh():
+    """A small four-sided boss. Shared by every frieze so the file stays light."""
+    mesh = bpy.data.meshes.new("ReliefBoss")
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, segments=4, radius1=0.14, radius2=0.0, depth=0.16)
+    bm.to_mesh(mesh)
+    bm.free()
+    return mesh
+
+def jharokha_mesh():
+    """Projecting balcony: slab, brackets, posts, eave. One mesh, many copies."""
+    mesh = bpy.data.meshes.new("Jharokha")
+    bm = bmesh.new()
+
+    def box(cx, cy, cz, sx, sy, sz):
+        made = bmesh.ops.create_cube(bm, size=1.0)
+        for v in made["verts"]:
+            v.co.x = v.co.x * sx + cx
+            v.co.y = v.co.y * sy + cy
+            v.co.z = v.co.z * sz + cz
+
+    box(0, 0, 0, 0.85, 1.7, 0.14)
+    box(-0.55, 0, -0.22, 0.18, 0.32, 0.32)
+    box(0.55, 0, -0.22, 0.18, 0.32, 0.32)
+    box(0, 0, -0.22, 0.22, 0.55, 0.22)
+    box(-0.62, 0, 0.55, 0.12, 0.12, 0.9)
+    box(0.62, 0, 0.55, 0.12, 0.12, 0.9)
+    box(0, 0, 1.08, 1.05, 1.95, 0.12)
+    box(0, 0, 1.22, 0.7, 1.4, 0.1)
+    bm.to_mesh(mesh)
+    bm.free()
+    return mesh
+
+def frieze(name, col, mesh, mat, origin, along, up, count, step, parent=None):
+    ox, oy, oz = origin
+    ax, ay, az = along
+    for i in range(count):
+        instance(
+            f"{name}_{i}",
+            col,
+            mesh,
+            mat,
+            (ox + ax * i * step, oy + ay * i * step, oz + az * i * step),
+            parent=parent,
+        )
+
 # ---------------------------------------------------------------------------
 PRE = collection("01_Precinct")
 PAL = collection("02_Palace")
@@ -291,6 +337,19 @@ for i in range(8):
         parent=pav,
     )
 uv_dome("GreatDome", PAL, (0, 0, 13.0), 5.6, PLASTER, parent=pav)
+for i in range(16):
+    ang = math.tau * i / 16
+    cube(
+        f"DomeRib_{i}",
+        PAL,
+        (math.cos(ang) * 4.6, math.sin(ang) * 4.6, 14.3),
+        (0.16, 0.55, 2.4),
+        SAND,
+        rot=(0.55, 0, ang),
+        parent=pav,
+    )
+cylinder("Kalash", PAL, (0, 0, 17.2), 0.28, 1.1, SAND, parent=pav)
+uv_dome("KalashTop", PAL, (0, 0, 17.9), 0.35, SAND, parent=pav)
 for sx, sy in ((-6.5, -5), (6.5, -5), (-6.5, 5), (6.5, 5)):
     cylinder(f"ChhatriCol_{sx}_{sy}", PAL, (sx, sy, 6.8), 0.16, 1.6, MASONRY, parent=pav)
     uv_dome(f"Chhatri_{sx}_{sy}", PAL, (sx, sy, 7.7), 0.7, PLASTER, parent=pav)
@@ -305,13 +364,16 @@ fac = empty("WestFacade", PAL, (8, 56, 0))
 cube("FacadeWall", PAL, (0, 0, 7), (3.2, 32, 14), PINK, parent=fac)
 cube("FacadeRubble", PAL, (-1.7, 0, 2.6), (0.7, 32.4, 5.2), RUBBLE, parent=fac)
 cube("FacadeDoor", PAL, (-1.7, 0, 1.4), (0.3, 1.3, 2.3), DARK, parent=fac)
-jhar = shared_cube_mesh(0.85, 1.5, 1.15)
+boss = relief_mesh()
+jhar = jharokha_mesh()
 for row in (5.4, 8.4, 11.2):
     for i in range(8):
         zpos = -12 + i * 3.3
         if row < 6 and abs(zpos) < 1.2:
             continue
-        instance(f"Jharokha_{row}_{i}", PAL, jhar, SAND, (-1.9, zpos, row), parent=fac)
+        instance(f"Jharokha_{row}_{i}", PAL, jhar, SAND, (-2.15, zpos, row), parent=fac)
+frieze("FacadeFrieze", PAL, boss, SAND, (-1.85, -14, 4.3), (0, 1, 0), (0, 0, 0), 24, 1.15, fac)
+frieze("FacadeFriezeHigh", PAL, boss, SAND, (-1.85, -14, 12.6), (0, 1, 0), (0, 0, 0), 24, 1.15, fac)
 for sy in (-10, 0, 10):
     uv_dome(f"RoofChhatri_{sy}", PAL, (0, sy, 14.2), 1.1, PLASTER, parent=fac)
 fac.location = (8, 56, 0)
@@ -342,23 +404,31 @@ for i in range(4):
 suraj.location = (58, 36, 0)
 
 trip = empty("Tripolia", GATE, (60, 2.2, 0))
+cube("TripoliaWall", GATE, (0, 0.55, 3.3), (14, 1.4, 6.6), MASONRY, parent=trip)
 for i, x in enumerate((-3.2, 0, 3.2)):
     span = 1.15 if i != 1 else 1.45
     rise = 2.5 if i != 1 else 3.15
-    arch(f"TripoliaArch_{i}", GATE, (x, 0, 0.1), span, rise, 0.3, 1.6, MASONRY, parent=trip)
-cube("TripoliaPierL", GATE, (-5.0, 0, 2.4), (0.8, 1.8, 4.8), MASONRY, parent=trip)
-cube("TripoliaPierR", GATE, (5.0, 0, 2.4), (0.8, 1.8, 4.8), MASONRY, parent=trip)
-cube("TripoliaTorana", GATE, (0, 0.25, 4.3), (4.2, 0.4, 0.4), SAND, parent=trip)
-cube("TripoliaTorana2", GATE, (0, 0.3, 4.75), (2.2, 0.35, 0.28), SAND, parent=trip)
-cylinder("BastionWest", GATE, (-9, 1.2, 3.6), 3.2, 7.2, MASONRY, verts=12, parent=trip)
-cylinder("BastionEast", GATE, (9, 1.2, 3.6), 3.2, 7.2, MASONRY, verts=12, parent=trip)
+    arch(f"TripoliaArch_{i}", GATE, (x, -0.35, 0.15), span, rise, 0.28, 0.7, SAND, parent=trip)
+    arch(f"TripoliaOuter_{i}", GATE, (x, -0.55, 0.05), span + 0.45, rise + 0.4, 0.18, 0.35, MASONRY, parent=trip)
+cube("TripoliaTorana", GATE, (0, -0.2, 4.55), (11.5, 0.45, 0.35), SAND, parent=trip)
+cube("TripoliaTorana2", GATE, (0, -0.28, 5.05), (8.2, 0.35, 0.22), SAND, parent=trip)
+cube("TripoliaTorana3", GATE, (0, -0.32, 5.4), (4.4, 0.28, 0.18), SAND, parent=trip)
+frieze("GateFrieze", GATE, boss, SAND, (-5.2, -0.95, 4.15), (1, 0, 0), (0, 0, 0), 18, 0.6, trip)
+cylinder("BastionWest", GATE, (-9.2, 1.2, 3.8), 3.2, 7.6, MASONRY, verts=16, parent=trip)
+cylinder("BastionEast", GATE, (9.2, 1.2, 3.8), 3.2, 7.6, MASONRY, verts=16, parent=trip)
+for bastion_x in (-9.2, 9.2):
+    frieze(f"BastionBand_{bastion_x}", GATE, boss, SAND, (bastion_x - 1.4, -1.6, 5.2), (0.35, 0.2, 0), (0, 0, 0), 8, 1, trip)
 trip.location = (60, 2.2, 0)
 
-# --- Vijay Stambh, surveyed ---
-# Outside the precinct, south-east, door facing the palace (north, +Y).
+# --- Vijay Stambh, surveyed, one carved face repeated on four sides ---
+# 37.19 m. Faces taper from 10.67 m to 5.33 m. Nine storeys.
+# Each bay is a balcony, two columns, an arch, a niche and a standing figure.
+# The figures are silhouettes. They are not the named sculptures of the real tower.
 sx, sy = 168.0, 8.0
 stambh = empty("VijayStambh", STB, (sx, sy, 0))
-cube("Terrace", STB, (0, 0, 0.75), (12.8, 12.8, 1.5), MASONRY, parent=stambh)
+cube("StambhPad", STB, (0, 0, -0.08), (28, 28, 0.16), LAWN, parent=stambh)
+cube("Terrace", STB, (0, 0, 0.7), (12.8, 12.8, 1.4), MASONRY, parent=stambh)
+cube("TerraceStep", STB, (0, 0, 0.15), (14.2, 14.2, 0.3), MASONRY, parent=stambh)
 storeys = [5.2, 3.6, 3.6, 3.6, 3.6, 3.5, 3.5, 3.4, 3.3]
 z0 = 1.5
 for index, height in enumerate(storeys):
@@ -366,30 +436,63 @@ for index, height in enumerate(storeys):
     t = min(1.0, max(0.0, mid / 33.7))
     face = 10.67 + (5.33 - 10.67) * t
     skin = SAND if index % 2 == 0 else MARBLE
-    cube(f"Storey_{index + 1}", STB, (0, 0, z0 + height / 2), (face, face, height), skin, parent=stambh)
-    cube(f"Cornice_{index + 1}", STB, (0, 0, z0 + height - 0.12), (face + 0.9, face + 0.9, 0.24), MASONRY, parent=stambh)
+    cube(f"Storey_{index + 1}", STB, (0, 0, z0 + height / 2), (face, face, height * 0.92), skin, parent=stambh)
+    cube(f"Cornice_{index + 1}", STB, (0, 0, z0 + height - 0.1), (face + 0.85, face + 0.85, 0.22), MASONRY, parent=stambh)
     half = face / 2
-    door = index == 0
-    for fx, fy, rot in ((0, 1, 0), (0, -1, math.pi), (1, 0, math.pi / 2), (-1, 0, -math.pi / 2)):
-        ow = 1.55 if door and fy == 1 else 0.85
-        oh = 2.5 if door and fy == 1 else min(1.6, height * 0.46)
-        oz = (1.55 if door else height * 0.42)
+    inset = 0.22
+    for cx in (-1, 1):
+        for cy in (-1, 1):
+            cube(
+                f"Pilaster_{index + 1}_{cx}_{cy}",
+                STB,
+                (cx * (half - inset), cy * (half - inset), z0 + height / 2),
+                (0.42, 0.42, height),
+                MASONRY,
+                parent=stambh,
+            )
+    bay_w = face * 0.42
+    for fx, fy, rot in ((0, 1, 0), (0, -1, math.pi), (1, 0, -math.pi / 2), (-1, 0, math.pi / 2)):
+        ox, oy = fx * (half + 0.15), fy * (half + 0.15)
+        wide = (bay_w, 0.85, 0.14) if fx == 0 else (0.85, bay_w, 0.14)
+        cube(f"Balcony_{index + 1}_{fx}_{fy}", STB, (ox, oy, z0 + height * 0.22), wide, SAND, parent=stambh)
+        across = bay_w * 0.32
+        for side in (-1, 1):
+            px = ox + (side * across if fx == 0 else 0)
+            py = oy + (side * across if fy == 0 else 0)
+            cylinder(f"Col_{index + 1}_{fx}_{fy}_{side}", STB, (px, py, z0 + height * 0.22 + height * 0.28), 0.09, height * 0.5, MASONRY, verts=8, parent=stambh)
         arch(
-            f"Portico_{index + 1}_{fx}_{fy}",
+            f"BayArch_{index + 1}_{fx}_{fy}",
             STB,
-            (fx * (half + 0.35), fy * (half + 0.35), z0 + 0.15),
-            ow,
-            oh,
-            0.16,
-            0.45,
+            (ox, oy, z0 + height * 0.28),
+            bay_w * 0.28,
+            height * 0.42,
+            0.1,
+            0.28,
             SAND,
             rot=(0, 0, rot),
             parent=stambh,
         )
-        if door and fy == 1:
-            cube("StambhDoor", STB, (0, half + 0.15, z0 + 1.5), (1.5, 0.25, 2.5), DARK, parent=stambh)
+        niche_d = (0.2, 0.08, height * 0.55) if fx == 0 else (0.08, 0.2, height * 0.55)
+        cube(f"Niche_{index + 1}_{fx}_{fy}", STB, (fx * (half - 0.02), fy * (half - 0.02), z0 + height * 0.55), niche_d, DARK, parent=stambh)
+        fig_h = min(1.35, height * 0.42)
+        fz = z0 + height * 0.34
+        cylinder(f"Figure_{index + 1}_{fx}_{fy}", STB, (fx * (half + 0.05), fy * (half + 0.05), fz + fig_h * 0.35), 0.11, fig_h * 0.7, SAND, verts=8, parent=stambh)
+        uv_dome(f"FigureHead_{index + 1}_{fx}_{fy}", STB, (fx * (half + 0.05), fy * (half + 0.05), fz + fig_h * 0.78), 0.1, SAND, parent=stambh)
+        dentil_n = 6
+        for d in range(dentil_n):
+            u = -0.5 + (d + 0.5) / dentil_n
+            dx = ox + (u * face * 0.7 if fx == 0 else fx * 0.15)
+            dy = oy + (u * face * 0.7 if fy == 0 else fy * 0.15)
+            if fx != 0:
+                dx = fx * (half + 0.42)
+                dy = oy + u * face * 0.7
+            else:
+                dx = ox + u * face * 0.7
+                dy = fy * (half + 0.42)
+            cube(f"Dentil_{index + 1}_{fx}_{fy}_{d}", STB, (dx, dy, z0 + height - 0.28), (0.14, 0.14, 0.16), SAND, parent=stambh)
     z0 += height
-uv_dome("Cupola", STB, (0, 0, z0), 1.65, MARBLE, parent=stambh)
+uv_dome("Cupola", STB, (0, 0, z0 + 0.2), 1.55, MARBLE, parent=stambh)
+cylinder("Finial", STB, (0, 0, z0 + 1.7), 0.16, 0.9, SAND, parent=stambh)
 stambh.location = (sx, sy, 0)
 
 # Figure, 1.7 m, at the foot of the tower.
@@ -412,6 +515,13 @@ sun_obj = bpy.data.objects.new("Sun", sun)
 sun_obj.rotation_euler = (math.radians(48), math.radians(8), math.radians(35))
 scene.collection.objects.link(sun_obj)
 
+world = bpy.data.worlds.new("Sky")
+scene.world = world
+world.use_nodes = True
+background = world.node_tree.nodes["Background"]
+background.inputs["Color"].default_value = (0.62, 0.74, 0.88, 1)
+background.inputs["Strength"].default_value = 0.9
+
 def camera(name, loc, target, lens=38):
     bpy.ops.object.camera_add(location=loc)
     cam = bpy.context.active_object
@@ -428,6 +538,7 @@ approach = camera("Cam_Approach", (60, -28, 8), (60, 40, 8), 32)
 camera("Cam_Court", (28, 56, 6), (38, 56, 2), 28)
 camera("Cam_Dome", (62, 28, 7), (62, 58, 12), 32)
 camera("Cam_Stambh", (sx + 22, sy + 26, 8), (sx, sy, 16), 35)
+camera("Cam_StambhClose", (sx + 16, sy + 14, 7), (sx, sy, 14), 55)
 camera("Cam_Plan", (W / 2, D / 2, 160), (W / 2, D / 2, 0), 28)
 scene.camera = approach
 
