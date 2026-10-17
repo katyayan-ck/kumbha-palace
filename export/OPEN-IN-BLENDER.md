@@ -1,24 +1,17 @@
 # Open this on the MSI laptop
 
-Windows 11, i7, RTX 3050 4 GB. Blender is the tool that fits. Unreal can show the walk later, at medium settings. A headset does not fit this card.
+Windows 11, i7, GTX 1650 Max-Q, 4 GB GDDR6, DirectX 12. This card has no ray-tracing cores. In Blender use CUDA, not OptiX. In Unreal use software lighting, not hardware ray tracing.
 
-The file is in metres. +Y is north. The brown block by the tower is a person, 1.7 m. The walled palace is 400 by 250 feet. The tower is 37.19 m, faces 10.67 m at the base and 5.33 m under the cupola.
+The file is in metres. +Y is north. The brown block by the tower is a person, 1.7 m. The walled palace is 400 by 250 feet. The tower is 37.19 m.
 
 ## Blender
 
-1. Install Blender 4.5 LTS or newer from https://www.blender.org/download/
-2. Download `kumbha-palace.blend` from this folder (the green Code button on the repo, or the raw file).
-3. Open it. Middle mouse orbits. Numpad 7 is the plan. Numpad 1 is an elevation.
-4. The outliner is split into collections: Precinct, Palace, Gates, VijayStambh, LaterBuildings, ScaleFigure.
-5. Edit, Preferences, System, Cycles Render Devices, OptiX. Leave the viewport on Material Preview. A Cycles render of the whole palace will fill 4 GB.
-6. To cut a figure, select one storey, go to Sculpt Mode, and work that piece only. Do not multires the whole precinct.
+1. Install the notebook driver for the GTX 1650 from NVIDIA. Restart.
+2. Install Blender 4.5 LTS from https://www.blender.org/download/
+3. Windows Settings, System, Display, Graphics. Add blender.exe and set it to High performance so the GTX is used, not the Intel chip.
+4. In Blender: Edit, Preferences, System, Cycles Render Devices, CUDA. Tick the GTX 1650. Leave Intel unticked.
+5. Stay in Material Preview while modeling. A Cycles render of the whole palace will fill 4 GB.
 
-## Unreal, after the stone is further along
+## Unreal
 
-1. Install Unreal Engine 5.4 or 5.5 from the Epic Launcher. Skip a path-tracing template.
-2. Blank project.
-3. Import `kumbha-palace.glb`. Set the uniform scale to 100. The file is metres. Unreal is centimetres.
-4. Scalability Medium. Lumen on, software ray tracing if the hardware mode runs out of memory. Path tracer off. Nanite only on the tower meshes.
-5. If the viewport says it is out of video memory, open the console with the tilde key and run `r.Streaming.PoolSize 1500`.
-
-This is the measured mass, not the finished carving. The figures still have to be sculpted on the laptop.
+Import `kumbha-palace.glb` at scale 100. Scalability Medium or Low. Software Lumen only. Path tracer off. Hardware ray tracing is not available on this GPU.
