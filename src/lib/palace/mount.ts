@@ -24,11 +24,11 @@ const PRESETS: Record<string, { pos: V3; target: V3 }> = {
   cliff: { pos: [-58, 32, -6], target: [10, 6, 78] },
   court: { pos: [2, 7.5, 16], target: [0, 3, -8] },
   diwan: { pos: [1, 3.4, -8], target: [0, 2.6, -16] },
-  aerial: { pos: [8, 110, 78], target: [6, 4, 8] },
+  aerial: { pos: [18, 150, 96], target: [16, 6, 10] },
   sunrise: { pos: [28, 16, 48], target: [8, 12, 4] },
   zenana: { pos: [-2, 8, -24], target: [-4, 3, -34] },
   bastion: { pos: [42, 10, 40], target: [20, 8, 18] },
-  stambh: { pos: [98, 16, 28], target: [72, 18, 56] },
+  stambh: { pos: [128, 18, 38], target: [100, 18, 64] },
 };
 
 const COURT = 1.55;
@@ -491,6 +491,8 @@ export function mountPalace(
   matSand.color.set(0xc4896a);
   const matMarble = matPlaster.clone();
   matMarble.color.set(0xf7f1e6);
+  const matFacade = matPlaster.clone();
+  matFacade.color.set(0xe4b89a);
   const matFresco = new THREE.MeshBasicMaterial({
     map: maps.fresco,
     side: THREE.DoubleSide,
@@ -992,8 +994,8 @@ export function mountPalace(
   }
   addSpire(shivaX, shivaZ - 0.4, 2.4, 12.4);
 
-  const vx = 72;
-  const vz = 56;
+  const vx = 100;
+  const vz = 64;
   const terrace = 1.5;
   const faceAt = (heightOnShaft: number) => {
     const t = Math.min(1, Math.max(0, heightOnShaft / 33.7));
@@ -1047,23 +1049,84 @@ export function mountPalace(
 
   addFloor(2, COURT + 0.02, 33, 24, 18, matCourt);
   addFloor(26, 0.06, 30, 14, 16, matLawn);
-  addBox(58, 4.2, 0, 26, 8.4, 20, matPlaster);
-  addBox(58, 4.6, 0, 26.5, 0.35, 20.4, matRubble);
-  addFloor(58, 0.1, 0, 12, 10, matCourt);
-  addDome(58, 8.6, -6, 2.8, matPlaster, false, false);
-  addBox(54, 3.1, 26, 16, 6.2, 11, matMasonry);
-  addBox(54, 3.3, 26, 16.4, 0.3, 11.3, matRubble);
-  addFloor(38, 0.03, 12, 5.5, 64, matFloor);
+  const pWest = -44;
+  const pNorth = -28;
+  const pW = 121.92;
+  const pD = 76.2;
+  const pEast = pWest + pW;
+  const pSouth = pNorth + pD;
+  addBox(pWest, 5.2, (pNorth + pSouth) / 2, 1.8, 10.4, pD, matMasonry);
+  addBox(pEast, 5.2, (pNorth + pSouth) / 2, 1.8, 10.4, pD, matMasonry);
+  addBox((pWest + pEast) / 2, 4.6, pNorth, pW, 9.2, 1.6, matMasonry);
+  addBox((pWest + -8) / 2, 4.2, pSouth, -8 - pWest, 8.4, 1.6, matMasonry);
+  addBox((12 + pEast) / 2, 4.2, pSouth, pEast - 12, 8.4, 1.6, matMasonry);
+  addFloor(pEast + 8, 0.03, 10, 5.5, pD, matFloor);
+  addBox(108, 4.2, -2, 26, 8.4, 20, matPlaster);
+  addBox(108, 4.6, -2, 26.5, 0.35, 20.4, matRubble);
+  addFloor(108, 0.1, -2, 12, 10, matCourt);
+  addDome(108, 8.6, -8, 2.8, matPlaster, false, false);
+  addBox(106, 3.1, 24, 16, 6.2, 11, matMasonry);
+  addBox(106, 3.3, 24, 16.4, 0.3, 11.3, matRubble);
   const kund = new THREE.Mesh(
     new THREE.CircleGeometry(6.5, 24),
     new THREE.MeshStandardMaterial({ color: 0x243e3c, roughness: 0.18, metalness: 0.12 }),
   );
   kund.rotation.x = -Math.PI / 2;
-  kund.position.set(-6, 0.08, 60);
+  kund.position.set(-6, 0.08, 62);
   scene.add(kund);
-  addBox(56, 2.4, 48, 9, 4.8, 9, matCarve);
-  addSpire(56, 48, 7.5, 4.6);
-  addBox(-40, 4.2, 8, 1.6, 8.4, 78, matMasonry);
+  addBox(86, 2.4, 58, 9, 4.8, 9, matCarve);
+  addSpire(86, 58, 7.5, 4.6);
+
+  const facadeX = -32;
+  const facadeZ = 2;
+  const facadeW = 28;
+  const facadeH = 13.6;
+  addBox(facadeX, facadeH / 2, facadeZ, 3.4, facadeH, facadeW, matFacade);
+  addBox(facadeX - 1.85, 2.7, facadeZ, 1.15, 5.4, facadeW + 0.4, matRubble);
+  addBox(facadeX - 1.95, 5.5, facadeZ, 1.35, 0.32, facadeW + 0.6, matAshlar);
+  addBox(facadeX, facadeH - 0.25, facadeZ, 3.9, 0.4, facadeW + 0.4, matAshlar);
+  addBox(facadeX - 2.05, 1.45, facadeZ, 0.25, 2.3, 1.4, matDark);
+  for (let i = 0; i < 15; i++) {
+    merlons.push({
+      x: facadeX - 1.5,
+      y: facadeH,
+      z: facadeZ - facadeW / 2 + 1.2 + i * ((facadeW - 2.4) / 14),
+    });
+  }
+  const balconyAt: Array<[number, number]> = [];
+  for (const y of [5.6, 8.5, 11.2]) {
+    for (let i = 0; i < 7; i++) {
+      const z = facadeZ - 9 + i * 3;
+      if (y < 6.2 && Math.abs(z - facadeZ) < 1.3) continue;
+      balconyAt.push([y, z]);
+    }
+  }
+  const hang = (geo: THREE.BufferGeometry, mat: THREE.Material, place: (o: THREE.Object3D, y: number, z: number) => void) => {
+    const mesh = new THREE.InstancedMesh(geo, mat, balconyAt.length);
+    const dummy = new THREE.Object3D();
+    balconyAt.forEach(([y, z], i) => {
+      dummy.position.set(0, 0, 0);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(1, 1, 1);
+      place(dummy, y, z);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    });
+    scene.add(mesh);
+  };
+  const face = facadeX - 2.15;
+  hang(new THREE.BoxGeometry(0.7, 0.12, 1.45), matAshlar, (o, y, z) => o.position.set(face, y, z));
+  hang(new THREE.BoxGeometry(0.1, 0.85, 0.1), matCarve, (o, y, z) => o.position.set(face - 0.15, y + 0.5, z - 0.5));
+  hang(new THREE.BoxGeometry(0.1, 0.85, 0.1), matCarve, (o, y, z) => o.position.set(face - 0.15, y + 0.5, z));
+  hang(new THREE.BoxGeometry(0.1, 0.85, 0.1), matCarve, (o, y, z) => o.position.set(face - 0.15, y + 0.5, z + 0.5));
+  hang(new THREE.BoxGeometry(0.85, 0.1, 1.6), matCarve, (o, y, z) => o.position.set(face - 0.1, y + 0.98, z));
+  hang(new THREE.BoxGeometry(0.35, 1.15, 0.7), matDark, (o, y, z) => o.position.set(face + 0.15, y + 0.45, z));
+  hang(new THREE.SphereGeometry(0.36, 6, 4), matFacade, (o, y, z) => o.position.set(face - 0.12, y + 1.32, z));
+  addChhatri(facadeX, facadeH, facadeZ - 8, 0.7);
+  addChhatri(facadeX, facadeH, facadeZ, 0.9);
+  addChhatri(facadeX, facadeH, facadeZ + 8, 0.7);
+  addNiche(2 - 4.4, COURT + 1.7, 46.5, 0, 0.85, 1.15);
+  addNiche(2 + 4.4, COURT + 1.7, 46.5, 0, 0.85, 1.15);
 
   addBox(-8, COURT + 0.9, 22, 4, 1.8, 2.2, matDark);
   addBox(6, 0.45, 24.5, 2.2, 0.9, 1.4, matDark);

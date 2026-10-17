@@ -140,8 +140,8 @@ export const PARTS: PartInfo[] = [
     summary: "Nine storeys, 37.19 m to the cupola. Face 10.67 m wide at the base, 5.33 m under the dome.",
     history:
       "Placed where the plot and the map both put it: south-east of the palace, not in the house. James Tod’s survey: 37.19 m to the cupola, faces 10.67 m at the base and 5.33 m under the dome, on a terrace 12.8 m square. Nine storeys, a portico on every face, red sandstone and white marble. The door faces the palace. Sutradhar Jaita and his sons Napa, Puja and Poma carved it. The figure at the foot is 1.7 m. The niche relief stands in for the named images.",
-    min: [64, 0, 48],
-    max: [82, 44, 66],
+    min: [92, 0, 56],
+    max: [110, 44, 74],
   },
   {
     id: "fateh",
@@ -151,8 +151,8 @@ export const PARTS: PartInfo[] = [
     summary: "A rectangular palace east of the road, not part of Kumbha’s house.",
     history:
       "The plot shows Fateh Prakash across the road-separated ground east of the old palace. It is a later building, now the palace museum. It is drawn as a complete range with its own court so the old house and the later one are not confused.",
-    min: [44, 0, -12],
-    max: [72, 14, 12],
+    min: [94, 0, -14],
+    max: [122, 14, 10],
   },
   {
     id: "bandar",
@@ -162,8 +162,8 @@ export const PARTS: PartInfo[] = [
     summary: "A lower, heavier block. The treasury, not a residence.",
     history:
       "Nau Lakha Bandar stands on the plot south of Fateh Prakash, on the same side of the road. It is the fort treasury. The mass is lower and plainer than the palace domes.",
-    min: [44, 0, 18],
-    max: [64, 8, 34],
+    min: [96, 0, 16],
+    max: [116, 8, 32],
   },
   {
     id: "kund",
@@ -173,8 +173,19 @@ export const PARTS: PartInfo[] = [
     summary: "A still pool south of the service courts.",
     history:
       "The plot marks a kund south of the palace courts. It is drawn as water, not as another building. The jauhar chambers remembered on the west slope are not given rooms; their sites are not standing in a plan that can be trusted stone by stone.",
-    min: [-14, 0, 52],
-    max: [2, 2, 68],
+    min: [-14, 0, 54],
+    max: [2, 2, 70],
+  },
+  {
+    id: "facade",
+    title: "West palace wall",
+    where: "Outer west face of the house",
+    built: "Kumbha’s palace, restored reading of the standing shell",
+    summary: "Rubble base, plastered upper wall, three rows of jharokhas, chhatris on the roof.",
+    history:
+      "The long photographs of the palace show this wall: a heavy rubble plinth, pink plaster above, and balconies stacked in rows, with small domes and merlons along the skyline. A door at ground level has a short step. The precinct around it is the plot’s 400 by 250 feet. The photographed court and the dome were not stretched to fill that rectangle; a door stays the height of a person.",
+    min: [-36, 0, -14],
+    max: [-28, 16, 18],
   },
   {
     id: "bastion",

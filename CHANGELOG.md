@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-17 — Precinct and the west wall
+
+- The walled palace is now the plot’s 400 by 250 feet (121.9 by 76.2 metres). The photographed rooms were not enlarged: a doorway is still the height of a person.
+- Fateh Prakash, Nau Lakha Bandar, and the Vijay Stambh stand outside that wall, to the east and south-east, as the plot draws them.
+- The west face is the long wall in the photographs: rubble plinth, pink plaster, three rows of jharokhas, a ground door, merlons, and three chhatris. The balconies are instanced, so the view does not stall.
+- Two carved niches flank the Tripolia.
+
 ## 2026-10-17 — Plot
 
 - Gates, stables, the Shiva shrine, and the Vijay Stambh moved to the places on the plot. Suraj Pol is the south door of the palace. The Tripolia, with two round bastions, is the outer south gate. The stables sit south-west. The tower stands south-east, still at 37.19 m.
