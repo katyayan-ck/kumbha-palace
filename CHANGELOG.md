@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-18 — Architectural Blender model
+
+- Rebuilt `export/kumbha-palace.blend` from the plot and the photographs, in metres. 372 objects. Opens in Blender 5.2.
+- Precinct is 400 by 250 feet. Zanana court is sunken, with a rubble band, a seat door and a side window onto lawn, and stepped niches. The dome sits on a colonnade and an open drum. The west wall has three rows of jharokhas. Suraj Pol, the Tripolia and its bastions, the stables, and a shikhara are in the places the plot gives them.
+- The Vijay Stambh is the surveyed tower: 37.19 m, faces 10.67 m to 5.33 m, nine storeys, a portico on each face, sandstone and marble. A 1.7 m figure stands at the foot.
+- Cameras: Cam_Approach, Cam_Dome, Cam_Court, Cam_Stambh, Cam_Plan. Notes are in the text block READ_ME inside the file.
+- The named images on the tower are not separate sculptures. Those are cut in Sculpt Mode, one storey at a time, on the laptop.
+
 ## 2026-10-18 — Blender file for the laptop
 
 - Added a Blender 4.5 scene and a glTF, in metres, for an RTX 3050 4 GB laptop. Unreal is not run from this preview.
